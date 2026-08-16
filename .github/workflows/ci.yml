@@ -15,6 +15,7 @@ permissions:
 
 jobs:
   verify:
-    uses: LiquidMovz/ci-library/.github/workflows/verify-node-pnpm.yml@fca3b70a8fd68cfc2da1576388698f5a26e19715
+    uses: LiquidMovz/ci-library/.github/workflows/verify-node-pnpm.yml@921a4fbff39e0a43b4294817e212085d7e8b36fd
     with:
       node-version: "24"
+      run-gitleaks: false
