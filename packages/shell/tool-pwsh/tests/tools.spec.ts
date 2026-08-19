@@ -588,7 +588,7 @@ describe('sandbox escalation through ctx.approval', () => {
     const { ctx } = await setupSandboxed(true)
     const prompted = vi.fn()
     ctx.on('approval/request', () => { prompted(); return Promise.resolve<ApprovalOutcome>('allowed-once') })
-    const result = await call(ctx, 'pwsh', { ...escalate, sandbox_permissions: 'workspace-write' }, sandboxAgent('workspace-write'))
+    const result = await call(ctx, 'pwsh', { ...escalate, sandbox_permissions: 'workspace-write' }, sandboxAgent('danger-full-access'))
     expect(text(result)).toContain('not strictly wider')
     expect(prompted).not.toHaveBeenCalled()
 
@@ -618,6 +618,22 @@ describe('sandbox escalation through ctx.approval', () => {
     const result = await call(ctx, 'pwsh', escalate, sandboxAgent())
     expect(text(result)).toContain(message)
     expect(bash.modes).toEqual([])
+  })
+
+  it('treats same-mode sandbox_permissions as a no-op grant and never asks', async () => {
+    const { ctx, bash } = await setupSandboxed(true)
+    const prompted = vi.fn()
+    ctx.on('approval/request', () => { prompted(); return Promise.resolve<ApprovalOutcome>('allowed-once') })
+    const agent = sandboxAgent('danger-full-access')
+    const result = await call(ctx, 'pwsh', {
+      command: 'Write-Output ok',
+      description: 'already at full access',
+      sandbox_permissions: 'danger-full-access',
+      justification: 'session is already danger-full-access',
+    }, agent)
+    expect(result.isError).toBe(false)
+    expect(prompted).not.toHaveBeenCalled()
+    expect(bash.modes).toEqual(['danger-full-access'])
   })
 
   it('runs a granted foreground or background call under the approved mode', async () => {

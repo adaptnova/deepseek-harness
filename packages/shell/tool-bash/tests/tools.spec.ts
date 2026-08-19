@@ -608,7 +608,7 @@ describe('sandbox escalation through the generic task producer', () => {
     const { ctx } = await setupSandboxed(true)
     const prompted = vi.fn()
     ctx.on('approval/request', () => { prompted(); return Promise.resolve<ApprovalOutcome>('allowed-once') })
-    const result = await call(ctx, 'bash', { ...escalate, sandbox_permissions: 'workspace-write' }, sandboxAgent('workspace-write'))
+    const result = await call(ctx, 'bash', { ...escalate, sandbox_permissions: 'workspace-write' }, sandboxAgent('danger-full-access'))
     expect(text(result)).toContain('not strictly wider')
     expect(prompted).not.toHaveBeenCalled()
 
@@ -682,6 +682,29 @@ describe('sandbox escalation through the generic task producer', () => {
     })
     expect(text(result)).toBe('Error: tool call aborted')
     expect(start).not.toHaveBeenCalled()
+  })
+
+  it('treats same-mode sandbox_permissions as a no-op grant and never asks', async () => {
+    const { ctx, bash } = await setupSandboxed(true)
+    const prompted = vi.fn()
+    ctx.on('approval/request', () => { prompted(); return Promise.resolve<ApprovalOutcome>('allowed-once') })
+    const agent = sandboxAgent('danger-full-access')
+    const withReason = await call(ctx, 'bash', {
+      command: 'true',
+      description: 'already at full access',
+      sandbox_permissions: 'danger-full-access',
+      justification: 'session is already danger-full-access',
+    }, agent)
+    const emptyReason = await call(ctx, 'bash', {
+      command: 'true',
+      description: 'empty justification same mode',
+      sandbox_permissions: 'danger-full-access',
+      justification: '',
+    }, agent)
+    expect(withReason.isError).toBe(false)
+    expect(emptyReason.isError).toBe(false)
+    expect(prompted).not.toHaveBeenCalled()
+    expect(bash.modes).toEqual(['danger-full-access', 'danger-full-access'])
   })
 
   it('uses the session override for ordinary calls and evaluates widening against it', async () => {

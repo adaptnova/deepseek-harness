@@ -875,6 +875,31 @@ describe('sandbox escalation API (write/edit)', () => {
     expect(text(result)).not.toContain('[sandbox:')
   })
 
+  it('treats same-mode sandbox_permissions as a no-op grant and never asks', async () => {
+    const { ctx, fs } = await setupConfining({ approval: true })
+    const prompted = vi.fn()
+    ctx.on('approval/request', () => { prompted(); return Promise.resolve('allowed-once' as const) })
+    const withReason = await call(ctx, 'write', {
+      file_path: 'a.txt',
+      content: 'x',
+      sandbox_permissions: 'workspace-write',
+      justification: 'already at workspace-write',
+    }, escalationAgent())
+    const emptyReason = await call(ctx, 'write', {
+      file_path: 'b.txt',
+      content: 'y',
+      sandbox_permissions: 'workspace-write',
+      justification: '',
+    }, escalationAgent())
+    expect(withReason.isError).toBe(false)
+    expect(emptyReason.isError).toBe(false)
+    expect(prompted).not.toHaveBeenCalled()
+    expect(fs.stamped).toEqual([
+      { mode: 'workspace-write', workspaceRoot: resolve('/session-project') },
+      { mode: 'workspace-write', workspaceRoot: resolve('/session-project') },
+    ])
+  })
+
   it('an approved escalation stamps the granted mode onto that write', async () => {
     const { ctx, fs } = await setupConfining({ approval: true })
     ctx.on('approval/request', () => Promise.resolve('allowed-once' as const))
@@ -915,7 +940,7 @@ describe('sandbox escalation API (write/edit)', () => {
 
   it('rejects the escalation argument pairing (one field without the other)', async () => {
     const { ctx } = await setupConfining()
-    const missing = await call(ctx, 'write', { file_path: 'a.txt', content: 'x', sandbox_permissions: 'workspace-write' }, escalationAgent())
+    const missing = await call(ctx, 'write', { file_path: 'a.txt', content: 'x', sandbox_permissions: 'danger-full-access' }, escalationAgent())
     expect(missing.isError).toBe(true)
     expect(text(missing)).toContain('sandbox_permissions requires a justification')
   })

@@ -85,8 +85,14 @@ export class FsSandboxController {
    *   unsandboxed backend.
    */
   async resolvePolicy(toolName: string, args: FsEscalationArgs, exec: ToolExecution): Promise<SandboxExecutionPolicy | undefined> {
-    validateEscalationArgs(args.sandbox_permissions, args.justification)
     const standingPolicy = this.policy?.resolve({ ...exec.agent ? { session: exec.agent.session } : {} })
+    // Same-mode is not an escalation. Ignore the fields (including a missing
+    // or empty justification) and stamp the standing policy.
+    if (args.sandbox_permissions !== undefined && standingPolicy !== undefined
+      && args.sandbox_permissions === standingPolicy.mode) {
+      return standingPolicy
+    }
+    validateEscalationArgs(args.sandbox_permissions, args.justification)
     if (args.sandbox_permissions === undefined || args.justification === undefined) {
       return standingPolicy
     }
