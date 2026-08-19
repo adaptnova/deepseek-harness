@@ -422,3 +422,9 @@
       name: '@deepseek-ai/dsh-agent-presets'
       config:
         default: standard
+
+    # Internal cognition bridge only. Disabled until Iris cutover. Never claims
+    # nova.<agent>.direct.
+    - id: nats-seat-bridge
+      name: '@deepseek-ai/dsh-host-nats-seat-bridge'
+      disabled: true
