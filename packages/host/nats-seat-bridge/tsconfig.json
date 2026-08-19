@@ -2,8 +2,9 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "lib/types",
-    "noEmit": true
+    "outDir": "lib/types"
   },
-  "include": ["src", "tests"]
+  "include": [
+    "src"
+  ]
 }
