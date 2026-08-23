@@ -21,7 +21,6 @@ tmp/
 .claude/commands/
 .claude/launch.json
 .claude/settings.json
-.vscode/
 .DS_Store
 .idea
 mise.toml
@@ -39,3 +38,7 @@ apps/web/dist/
 worktrees/
 .agents/worktrees/
 .typert-*/
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore
